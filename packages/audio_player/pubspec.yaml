@@ -1,4 +1,6 @@
-name: audio_player
+# Copyright 2023 QSoft, Ltd. All rights reserved.
+
+name: audio_players
 description: A new Flutter project.
 publish_to: 'none'
 version: 0.1.0
@@ -7,6 +9,7 @@ environment:
   sdk: '>=2.19.2 <3.0.0'
 
 dependencies:
+  audioplayers: ^5.1.0
   flutter:
     sdk: flutter
 
@@ -17,3 +20,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - assets/
