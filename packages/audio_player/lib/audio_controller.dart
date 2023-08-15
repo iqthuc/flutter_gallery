@@ -4,24 +4,23 @@ import 'package:flutter/material.dart';
 
 class AudioController extends AudioAction {
   final AudioPlayer player;
-  final String audioPath;
-  final ReleaseMode? releaseMode;
+  final ReleaseMode releaseMode;
 
   AudioController({
-    AudioPlayer? audioPlayer,
-    required this.audioPath,
-    this.releaseMode = ReleaseMode.stop,
-  }) : player = audioPlayer ?? AudioPlayer();
+    required this.player,
+    this.releaseMode = ReleaseMode.loop,
+  });
 
   @override
-  Future<void> init() async {
+  Future<void> init(String audioPath) async {
     await player.setSourceUrl(audioPath).catchError(
           (error) => debugPrint('[AudioController] errors: $error'),
         );
+    player.setReleaseMode(releaseMode);
   }
 
   @override
-  Future<void> play() async {
+  Future<void> play(String audioPath) async {
     await player.play(UrlSource(audioPath));
   }
 
@@ -41,7 +40,7 @@ class AudioController extends AudioAction {
   }
 
   @override
-  Future<void> replay() async {
+  Future<void> replay(String audioPath) async {
     await player.stop();
     await player.play(UrlSource(audioPath));
   }
