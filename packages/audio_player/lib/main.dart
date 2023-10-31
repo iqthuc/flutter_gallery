@@ -12,7 +12,7 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AudioController controller = AudioController(player: AudioPlayer());
+    final AudioController controller = AudioController(player: AudioPlayer(),releaseMode: ReleaseMode.stop);
     return MaterialApp(
       home: Scaffold(
         body: Column(
@@ -21,7 +21,7 @@ class MainApp extends StatelessWidget {
             AudioWidget(
               controller: controller,
               audioPath:
-                  "https://firebasestorage.googleapis.com/v0/b/fir-fcm-b44e3.appspot.com/o/mp3%2FGat-Di-Nuoc-Mat-Noo-Phuoc-Thinh-Tonny-Viet.mp3?alt=media&token=dca741cb-03b6-4ec0-bb6d-f4e0b772afdb",
+                  "https://127.0.0.1:3060/home/test-mp3",
             ),
           ],
         ),
