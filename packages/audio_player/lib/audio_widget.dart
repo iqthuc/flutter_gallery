@@ -16,15 +16,36 @@ class AudioWidget extends StatefulWidget {
 }
 
 class _AudioWidgetState extends State<AudioWidget> {
-  Duration totalTime = Duration.zero;
-  Duration position = Duration.zero;
-  double progress = 0;
+  ValueNotifier<Duration> totalTime = ValueNotifier(Duration.zero);
+  ValueNotifier<Duration> currentPosition = ValueNotifier(Duration.zero);
+  ValueNotifier<double> currentProgress = ValueNotifier(0);
+  bool isSliding = false;
   @override
   void initState() {
     super.initState();
-    widget.controller.init(widget.audioPath);
-    widget.controller.play(widget.audioPath);
-    widget.controller.player.getDuration().then((value) => totalTime = value!);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await initPlayer();
+    });
+  }
+
+  initPlayer() async {
+    await widget.controller.player.setSourceUrl(widget.audioPath);
+    await widget.controller.play(widget.audioPath);
+
+    totalTime.value = await widget.controller.player.getDuration() ?? Duration.zero;
+
+    widget.controller.player.onPlayerStateChanged.listen((playerState) {
+      if (playerState == PlayerState.stopped) {
+        currentPosition.value = Duration.zero;
+      }
+    });
+
+    widget.controller.player.onPositionChanged.listen((position) {
+      currentPosition.value = position;
+      if (isSliding == false) {
+        currentProgress.value = currentPosition.value.inMilliseconds / totalTime.value.inMilliseconds;
+      }
+    });
   }
 
   @override
@@ -42,43 +63,40 @@ class _AudioWidgetState extends State<AudioWidget> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Expanded(
-              child: StreamBuilder<Duration>(
-                  initialData: Duration.zero,
-                  stream: widget.controller.player.onPositionChanged,
-                  builder: (context, snapshot) {
-                    position = snapshot.data ?? Duration.zero;
-
-                    if (widget.controller.player.state == PlayerState.stopped) {
-                      position = Duration.zero;
-                    } else if (widget.controller.player.state == PlayerState.completed) {}
-
-                    if (totalTime != Duration.zero && position != Duration.zero) {
-                      progress = position.inMilliseconds / totalTime.inMilliseconds;
-                    } else {
-                      progress = 0;
-                    }
-
-                    return Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(position.format),
-                        Expanded(
-                          child: Slider(
-                            value: progress,
-                            onChanged: (value) {},
-                          ),
-                        ),
-                      ],
-                    );
-                  }),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ValueListenableBuilder(
+                      valueListenable: currentPosition,
+                      builder: (context, value, _) {
+                        return Text(value.format);
+                      }),
+                  Expanded(
+                    child: ValueListenableBuilder(
+                        valueListenable: currentProgress,
+                        builder: (context, value, _) {
+                          return Slider(
+                            value: value,
+                            onChanged: (value) {
+                              isSliding = true;
+                              currentProgress.value = value;
+                            },
+                            onChangeEnd: (value) async {
+                              isSliding = false;
+                              await widget.controller.playAt(value);
+                            },
+                          );
+                        }),
+                  ),
+                ],
+              ),
             ),
-            StreamBuilder<Duration>(
-                initialData: const Duration(),
-                stream: widget.controller.player.onDurationChanged,
-                builder: (context, snapshot) {
-                  totalTime = snapshot.data ?? Duration.zero;
-                  return Text(totalTime.format);
-                }),
+            ValueListenableBuilder(
+              valueListenable: totalTime,
+              builder: (context, value, _) {
+                return Text(value.format);
+              },
+            ),
           ],
         ),
         TextButton(
@@ -108,25 +126,13 @@ class _AudioWidgetState extends State<AudioWidget> {
         ),
         TextButton(
           onPressed: () async {
-            final currentPosition = await widget.controller.player.getCurrentPosition() ?? Duration.zero;
-            final afterPosition = Duration(
-                milliseconds:
-                    currentPosition.inMilliseconds <= 10 * 1000 ? 0 : currentPosition.inMilliseconds - 10 * 1000);
-
-            await widget.controller.player.seek(afterPosition);
+            await widget.controller.backward();
           },
           child: const Text("backward 10s"),
         ),
         TextButton(
           onPressed: () async {
-            final currentPosition = await widget.controller.player.getCurrentPosition() ?? Duration.zero;
-            final duration = await widget.controller.player.getDuration() ?? Duration.zero;
-            final afterPosition = Duration(
-                milliseconds: currentPosition.inMilliseconds >= duration.inMilliseconds - 10 * 1000
-                    ? duration.inMilliseconds
-                    : currentPosition.inMilliseconds + 10 * 1000);
-
-            await widget.controller.player.seek(afterPosition);
+            await widget.controller.forward();
           },
           child: const Text("forward 10s"),
         ),

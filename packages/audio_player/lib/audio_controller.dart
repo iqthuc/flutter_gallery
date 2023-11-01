@@ -1,6 +1,5 @@
 import 'package:audio_players/audio_action.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:flutter/material.dart';
 
 class AudioController extends AudioAction {
   final AudioPlayer player;
@@ -10,14 +9,6 @@ class AudioController extends AudioAction {
     required this.player,
     this.releaseMode = ReleaseMode.loop,
   });
-
-  @override
-  Future<void> init(String audioPath) async {
-    await player.setSourceUrl(audioPath).catchError(
-          (error) => debugPrint('[AudioController] errors: $error'),
-        );
-    player.setReleaseMode(releaseMode);
-  }
 
   @override
   Future<void> play(String audioPath) async {
@@ -40,13 +31,29 @@ class AudioController extends AudioAction {
   }
 
   @override
-  Future<void> replay(String audioPath) async {
-    await player.stop();
-    await player.play(UrlSource(audioPath));
+  Future<void> dispose() async {
+    await player.dispose();
   }
 
   @override
-  Future<void> dispose() async {
-    await player.dispose();
+  Future<void> backward({Duration interval = const Duration(seconds: 10)}) async {
+    final currentPosition = await player.getCurrentPosition() ?? Duration.zero;
+    final afterPosition = currentPosition <= interval ? Duration.zero : currentPosition - interval;
+    await player.seek(afterPosition);
+  }
+
+  @override
+  Future<void> forward({Duration interval = const Duration(seconds: 10)}) async {
+    final currentPosition = await player.getCurrentPosition() ?? Duration.zero;
+    final totalTime = await player.getDuration() ?? Duration.zero;
+    final afterPosition = currentPosition >= (totalTime - interval) ? totalTime : currentPosition + interval;
+    await player.seek(afterPosition);
+  }
+
+  @override
+  Future<void> playAt(double progressSelected) async {
+    final totalTime = await player.getDuration() ?? Duration.zero;
+    final toProgress = Duration(seconds: (totalTime.inSeconds * progressSelected).toInt());
+    await player.seek(toProgress);
   }
 }
