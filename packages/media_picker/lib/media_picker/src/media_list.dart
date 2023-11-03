@@ -66,66 +66,72 @@ class _MediaListState extends State<MediaList> {
   @override
   Widget build(BuildContext context) {
     return Scrollbar(
-      child: GridView.builder(
-        addAutomaticKeepAlives: false,
-        physics: const BouncingScrollPhysics(),
+      child: CustomScrollView(
         controller: widget.scrollController,
-        itemCount: _mediaList.length + 1,
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            mainAxisSpacing: 2, crossAxisSpacing: 2, crossAxisCount: widget.decoration!.columnCount),
-        itemBuilder: (BuildContext context, int i) {
-          if (i == 0) {
-            return InkWell(
-              onTap: widget.onTapCamera,
-              child: Stack(
-                alignment: Alignment.center,
-                fit: StackFit.expand,
-                children: [
-                  Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.camera_alt,
-                          size: 36,
-                          color: Colors.black.withOpacity(0.5),
+        slivers: [
+          SliverGrid.builder(
+            addAutomaticKeepAlives: false,
+            itemCount: _mediaList.length + 1,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              mainAxisSpacing: 2,
+              crossAxisSpacing: 2,
+              crossAxisCount: widget.decoration!.columnCount,
+            ),
+            itemBuilder: (BuildContext context, int i) {
+              if (i == 0) {
+                return InkWell(
+                  onTap: widget.onTapCamera,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    fit: StackFit.expand,
+                    children: [
+                      Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.camera_alt,
+                              size: 36,
+                              color: Colors.white.withOpacity(0.5),
+                            ),
+                            Text(
+                              'Chụp ảnh',
+                              style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 16),
+                            )
+                          ],
                         ),
-                        Text(
-                          'Chụp ảnh',
-                          style: TextStyle(color: Colors.black.withOpacity(0.5), fontSize: 16),
-                        )
-                      ],
-                    ),
-                  )
-                ],
-              ),
-            );
-          }
-          final index = i - 1;
-          if (index == _mediaList.length - 20 && !empty) {
-            _fetchNewMedia();
-          }
-          return MediaTile(
-            allowedExtensions: widget.allowedExtensions,
-            totalSelect: selectedMedias.length,
-            maxSelect: widget.maxSelected,
-            onExceededLimit: widget.onExceededLimit,
-            onExceededExtensionLimit: widget.onExceededExtensionLimit,
-            media: _mediaList[index],
-            counterItemWidget: widget.counterItemWidget,
-            onSelected: (isSelected, media) {
-              if (isSelected) {
-                setState(() => selectedMedias.add(media));
-              } else {
-                setState(() => selectedMedias.removeWhere((media) => media.id == media.id));
+                      )
+                    ],
+                  ),
+                );
               }
-              widget.headerController.updateSelection?.call(selectedMedias);
-              widget.onSelectItem?.call(selectedMedias);
+              final index = i - 1;
+              if (index == _mediaList.length - 20 && !empty) {
+                _fetchNewMedia();
+              }
+              return MediaTile(
+                allowedExtensions: widget.allowedExtensions,
+                totalSelect: selectedMedias.length,
+                maxSelect: widget.maxSelected,
+                onExceededLimit: widget.onExceededLimit,
+                onExceededExtensionLimit: widget.onExceededExtensionLimit,
+                media: _mediaList[index],
+                counterItemWidget: widget.counterItemWidget,
+                onSelected: (isSelected, media) {
+                  if (isSelected) {
+                    setState(() => selectedMedias.add(media));
+                  } else {
+                    setState(() => selectedMedias.removeWhere((media) => media.id == media.id));
+                  }
+                  widget.headerController.updateSelection?.call(selectedMedias);
+                  widget.onSelectItem?.call(selectedMedias);
+                },
+                isSelected: isPreviouslySelected(_mediaList[index]),
+                decoration: widget.decoration,
+              );
             },
-            isSelected: isPreviouslySelected(_mediaList[index]),
-            decoration: widget.decoration,
-          );
-        },
+          ),
+        ],
       ),
     );
   }

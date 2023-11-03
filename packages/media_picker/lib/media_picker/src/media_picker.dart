@@ -60,8 +60,10 @@ class _MediaPickerState extends State<MediaPicker> {
   @override
   void initState() {
     super.initState();
-    _fetchAlbums();
     decoration = widget.decoration ?? PickerDecoration();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchAlbums();
+    });
   }
 
   @override
